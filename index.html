@@ -294,30 +294,31 @@
   .form-label {
     font-size: 13px;
     font-weight: 500;
-    color: rgba(255,255,255,0.6);
+    color: rgba(19,16,93,0.55);
     letter-spacing: 0.3px;
     margin-bottom: 8px;
     display: block;
   }
   .form-input, .form-select {
     width: 100%;
-    background: rgba(255,255,255,0.07);
-    border: 1.5px solid rgba(255,255,255,0.15);
-    border-radius: 8px;
+    background: var(--off-white);
+    border: 1.5px solid var(--navy);
+    border-radius: 10px;
     padding: 14px 18px;
     font-family: var(--font-main);
-    font-size: 16px;
-    font-weight: 400;
-    color: var(--white);
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--navy);
     outline: none;
     transition: border-color 0.2s;
     -webkit-appearance: none;
   }
-  .form-input::placeholder { color: rgba(255,255,255,0.25); }
+  .form-input::placeholder { color: rgba(19,16,93,0.3); }
   .form-input:focus, .form-select:focus {
     border-color: var(--teal);
+    background: #fff;
   }
-  .form-select option { background: var(--navy-dark); color: var(--white); }
+  .form-select option { background: #fff; color: var(--navy); }
   .form-select-wrap {
     position: relative;
   }
@@ -326,7 +327,7 @@
     position: absolute;
     right: 18px; top: 50%;
     transform: translateY(-50%);
-    color: rgba(255,255,255,0.4);
+    color: rgba(19,16,93,0.4);
     pointer-events: none;
     font-size: 14px;
   }
@@ -592,7 +593,7 @@
     <div class="screen" id="s12">
       <div class="q-label">Almost done</div>
       <div class="q-text">Quick details to<br>personalise your results</div>
-      <div class="q-hint">This helps us personalise the recommendations accurately.</div>
+      <div class="q-hint">This helps us curate the plan for you.</div>
       <div style="margin-top: 28px;">
         <div class="form-group">
           <label class="form-label">Age</label>
@@ -609,7 +610,7 @@
             </select>
           </div>
         </div>
-        <button class="continue-btn visible" onclick="submitQuiz()" style="margin-top:8px;">Get My Biological Age →</button>
+        <button class="continue-btn visible" onclick="submitQuiz()" style="margin-top:8px;">Get my Personalised Plan →</button>
       </div>
     </div>
 
