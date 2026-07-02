@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neav Health — Precision Health for Those Who Take It Seriously</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Century Gothic', 'Trebuchet MS', sans-serif;
+      color: #13105D;
+      background: #fff;
+      overflow-x: hidden;
+    }
+
+    p, small, .body-text { font-family: 'Jost', 'Century Gothic', sans-serif; }
+    a { text-decoration: none; cursor: pointer; }
+
+    /* ── Navbar ──────────────────────────────────────── */
+    #navbar {
+      position: fixed;
+      top: 16px;
+      left: 24px;
+      right: 24px;
+      z-index: 1000;
+      background: rgba(13, 11, 71, 0.5);
+      border: 3px solid #08609e;
+      border-radius: 50px;
+      padding: 12px 32px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-logo img {
+      height: 30px;
+      display: block;
+      filter: brightness(0) invert(1);
+    }
+
+    .nav-center-links {
+      display: flex;
+      align-items: center;
+      gap: 35px;
+    }
+
+    .nav-link {
+      font-size: 14px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+      white-space: nowrap;
+      transition: color 0.2s ease;
+      font-family: 'Jost', sans-serif;
+    }
+
+    .nav-link:hover { color: #fff; }
+
+    .nav-right-group {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .nav-login {
+      font-size: 14px;
+      font-weight: 600;
+      color: #ffffff8e;
+      font-family: 'Jost', sans-serif;
+      white-space: nowrap;
+    }
+
+    .btn-start {
+      background: #ffffffce;
+      color: #13105D;
+      padding: 10px 22px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+      font-family: 'Jost', sans-serif;
+      white-space: nowrap;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .btn-start:hover { background: #e8e8e8; }
+
+    .hamburger-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 22px;
+      color: #fff;
+      line-height: 1;
+      padding: 2px 4px;
+      flex-shrink: 0;
+    }
+
+    /* ── Slide-in panel ──────────────────────────────── */
+    #panel-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 1090;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    #panel-overlay.open { opacity: 1; pointer-events: auto; }
+
+    #side-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 380px;
+      height: 100vh;
+      z-index: 1100;
+      background: #13105D;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.3);
+      transform: translateX(100%);
+      transition: transform 0.4s ease;
+      padding: 60px 40px 50px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    #side-panel.open { transform: translateX(0); }
+
+    .panel-close {
+      position: absolute;
+      top: 20px;
+      right: 28px;
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 32px;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .panel-nav {
+      display: flex;
+      flex-direction: column;
+      margin-top: 8px;
+    }
+
+    .panel-nav a {
+      font-size: 19px;
+      font-weight: 600;
+      color: #fff;
+      line-height: 2.6;
+      font-family: 'Century Gothic', 'Trebuchet MS', sans-serif;
+      transition: opacity 0.2s ease;
+    }
+
+    .panel-nav a:hover { opacity: 0.75; }
+
+    .panel-cta-area {
+      margin-top: 50px;
+    }
+
+    .panel-cta-label {
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 16px;
+    }
+
+    .btn-panel-cta {
+      display: inline-block;
+      background: #017584;
+      color: #fff;
+      padding: 14px 32px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 15px;
+      font-family: 'Century Gothic', 'Trebuchet MS', sans-serif;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .btn-panel-cta:hover { background: #015f6e; }
+
+    /* Mobile: panel = full screen */
+    @media (max-width: 768px) {
+      #side-panel { width: 100%; }
+      .nav-center-links { display: none; }
+      .nav-login, .btn-start { display: none; }
+      #navbar { padding: 10px 20px; }
+    }
+
+    /* ── Hero ────────────────────────────────────────── */
+    #hero {
+      position: relative;
+      width: 100%;
+      height: 130vh;
+      min-height: 600px;
+      background: #13105D;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+    }
+
+    /* Tree image stack */
+    #tree-stack {
+      position: absolute;
+      right: 65%;
+      top: 8%;
+      transform: translateY(-50%);
+      height: 220vh;
+      width: 500px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .tree-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: auto;
+      max-width: none;
+      object-fit: contain;
+    }
+
+    .tree-glow-layer {
+      filter: drop-shadow(0 0 100px #017584) drop-shadow(0 0 350px #017584);
+      animation: treeBreathe 4.5s ease-in-out infinite;
+    }
+
+    @keyframes treeBreathe {
+      0%, 100% { opacity: 0.10; }
+      50% { opacity: 0.85; }
+    }
+
+    /* Hero content */
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      padding-left: 8%;
+      padding-right: 5%;
+      max-width: 1000px;
+    }
+
+    .hero-headline-grid {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .hero-intro {
+      font-size: 26px;
+      font-weight: 700;
+      color: #ffffff;
+      font-family: 'Century Gothic', 'Trebuchet MS', sans-serif;
+      white-space: nowrap;
+    }
+
+    #rotating-phrase {
+      overflow: hidden;
+      position: relative;
+      height: 42px;
+      display: flex;
+      align-items: center;
+    }
+
+    .phrase {
+      position: absolute;
+      top: 0;
+      left: 0;
+      opacity: 0;
+      white-space: nowrap;
+      font-style: italic;
+      font-weight: 700;
+      font-size: 32px;
+      color: #017584;
+      line-height: 1.25;
+      font-family: 'Century Gothic', 'Trebuchet MS', sans-serif;
+      transition: opacity 0.8s ease;
+    }
+
+    .phrase.active { opacity: 1; }
+
+    .hero-para {
+      margin-top: 120px;
+      font-family: 'Jost', sans-serif;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgba(255,255,255,0.7);
+      line-height: 1.7;
+      max-width: 460px;
+    }
+
+    .hero-subline {
+      margin-top: 20px;
+      font-size: 16px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.9);
+      font-family: 'Century Gothic', 'Trebuchet MS', sans-serif;
+    }
+
+    .hero-btn-row {
+      margin-top: 28px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .btn-quiz {
+      background: #fff;
+      color: #13105D;
+      padding: 14px 30px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 15px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Century Gothic', 'Trebuchet MS', sans-serif;
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+
+    .btn-quiz:hover { background: #e8e8e8; transform: translateY(-1px); }
+
+    .btn-why {
+      background: transparent;
+      color: #fff;
+      border: 2px solid #fff;
+      padding: 12px 28px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      font-family: 'Century Gothic', 'Trebuchet MS', sans-serif;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .btn-why:hover { background: rgba(255,255,255,0.1); }
+
+    /* Mobile hero */
+    @media (max-width: 768px) {
+      #tree-stack { height: 50vh; opacity: 0.5; }
+      .hero-content { padding-left: 6%; max-width: 100%; }
+      .hero-intro { font-size: 20px; }
+      .phrase { font-size: 24px; }
+      .hero-para { font-size: 15px; margin-top: 40px; }
+      .hero-subline { font-size: 15px; }
+    }
+
+    /* ── Protocol ────────────────────────────────────── */
+    #protocol {
+      background: #fff;
+      padding: 100px 40px;
+      text-align: center;
+    }
+
+    .section-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #017584;
+      margin-bottom: 16px;
+    }
+
+    .section-heading {
+      font-size: 42px;
+      font-weight: 700;
+      color: #13105D;
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+
+    .section-subtext {
+      font-family: 'Jost', sans-serif;
+      font-size: 18px;
+      color: #666;
+      max-width: 600px;
+      margin: 0 auto 70px;
+      line-height: 1.65;
+    }
+
+    .timeline {
+      position: relative;
+      max-width: 680px;
+      margin: 0 auto 70px;
+      text-align: left;
+    }
+
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 24px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      border-left: 2px dashed #017584;
+      opacity: 0.4;
+    }
+
+    .timeline-step {
+      display: flex;
+      gap: 28px;
+      align-items: flex-start;
+      margin-bottom: 48px;
+      position: relative;
+    }
+
+    .timeline-step:last-child { margin-bottom: 0; }
+
+    .step-circle {
+      flex-shrink: 0;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 2px solid #017584;
+      background: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #13105D;
+      position: relative;
+      z-index: 1;
+    }
+
+    .step-content { padding-top: 6px; }
+
+    .step-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #13105D;
+      margin-bottom: 8px;
+    }
+
+    .step-desc {
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      color: #666;
+      max-width: 500px;
+      line-height: 1.65;
+    }
+
+    .transform-line {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 0 auto 48px;
+      flex-wrap: wrap;
+    }
+
+    .transform-before {
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      color: #999;
+      font-style: italic;
+    }
+
+    .transform-arrow { font-size: 22px; color: #017584; }
+
+    .transform-after {
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      color: #017584;
+      font-weight: 600;
+    }
+
+    .btn-primary {
+      display: inline-block;
+      background: #017584;
+      color: #fff;
+      padding: 16px 36px;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 600;
+      transition: background 0.2s ease, transform 0.15s ease;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary:hover { background: #015f6e; transform: translateY(-1px); }
+
+    /* ── FAQs ────────────────────────────────────────── */
+    #faqs {
+      background: #F8F9FF;
+      padding: 100px 40px;
+    }
+
+    #faqs .section-heading {
+      text-align: center;
+      margin-bottom: 56px;
+    }
+
+    .faq-list { max-width: 740px; margin: 0 auto; }
+
+    .faq-item { border-bottom: 1px solid rgba(19,16,93,0.1); }
+    .faq-item:first-child { border-top: 1px solid rgba(19,16,93,0.1); }
+
+    .faq-question {
+      width: 100%;
+      background: none;
+      border: none;
+      text-align: left;
+      padding: 22px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      font-family: 'Century Gothic', 'Trebuchet MS', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: #13105D;
+      gap: 16px;
+    }
+
+    .faq-question:hover { opacity: 0.8; }
+
+    .faq-icon {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1.5px solid #017584;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #017584;
+      font-size: 14px;
+      transition: transform 0.3s ease;
+      font-weight: 400;
+      line-height: 1;
+    }
+
+    .faq-item.open .faq-icon { transform: rotate(45deg); }
+
+    .faq-answer {
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height 0.4s ease;
+    }
+
+    .faq-item.open .faq-answer { max-height: 320px; }
+
+    .faq-answer p {
+      font-family: 'Jost', sans-serif;
+      font-size: 15px;
+      color: #555;
+      line-height: 1.75;
+      padding-bottom: 22px;
+    }
+
+    /* ── Footer ──────────────────────────────────────── */
+    footer {
+      background: #13105D;
+      padding: 70px 40px 40px;
+    }
+
+    .footer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 48px;
+      max-width: 1100px;
+      margin: 0 auto 48px;
+    }
+
+    .footer-logo img {
+      height: 42px;
+      filter: brightness(0) invert(1);
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .footer-tagline {
+      font-family: 'Jost', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.6;
+      max-width: 240px;
+    }
+
+    .footer-col-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.45);
+      margin-bottom: 20px;
+    }
+
+    .footer-links { display: flex; flex-direction: column; gap: 12px; }
+
+    .footer-links a {
+      font-family: 'Jost', sans-serif;
+      font-size: 14px;
+      color: rgba(255,255,255,0.75);
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover { color: #017584; }
+
+    .footer-contact { display: flex; flex-direction: column; gap: 10px; }
+
+    .footer-contact a {
+      font-family: 'Jost', sans-serif;
+      font-size: 13px;
+      color: rgba(255,255,255,0.65);
+      transition: color 0.2s ease;
+    }
+
+    .footer-contact a:hover { color: #017584; }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.1);
+      padding-top: 28px;
+      text-align: center;
+    }
+
+    .footer-bottom p {
+      font-family: 'Jost', sans-serif;
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+    }
+
+    /* ── Responsive (sections below hero) ───────────── */
+    @media (max-width: 768px) {
+      #protocol, #faqs { padding: 70px 24px; }
+      .section-heading { font-size: 32px; }
+      .section-subtext { font-size: 16px; }
+      .footer-grid { grid-template-columns: 1fr; gap: 36px; }
+      footer { padding: 50px 24px 32px; }
+    }
+
+    @media (max-width: 480px) {
+      .section-heading { font-size: 26px; }
+      .timeline::before { left: 19px; }
+      .step-circle { width: 40px; height: 40px; font-size: 15px; }
+      .step-title { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Navbar ──────────────────────────────────────── -->
+  <nav id="navbar">
+    <a href="index.html" class="nav-logo">
+      <img src="neav_logo.png" alt="Neav Health" />
+    </a>
+
+    <div class="nav-center-links">
+      <a href="#protocol" class="nav-link" onclick="smoothScroll(event,'protocol')">The Foundation Protocol</a>
+      <a href="gift.html" class="nav-link">Gift of Health</a>
+      <a href="services.html" class="nav-link">Book a Service</a>
+    </div>
+
+    <div class="nav-right-group">
+      <a href="#" class="nav-login">Log In</a>
+      <a href="quiz.html" class="btn-start">Start Neav Journey</a>
+      <button class="hamburger-btn" onclick="openPanel()" aria-label="Open menu">&#9776;</button>
+    </div>
+  </nav>
+
+  <!-- Dark overlay behind panel -->
+  <div id="panel-overlay" onclick="closePanel()"></div>
+
+  <!-- Slide-in panel -->
+  <div id="side-panel">
+    <button class="panel-close" onclick="closePanel()" aria-label="Close menu">&times;</button>
+    <nav class="panel-nav">
+      <a href="#protocol" onclick="smoothScroll(event,'protocol');closePanel()">The Foundation Protocol</a>
+      <a href="gift.html" onclick="closePanel()">Gift of Health</a>
+      <a href="services.html" onclick="closePanel()">Book a Service</a>
+      <a href="blog.html" onclick="closePanel()">Blog</a>
+      <a href="#faqs" onclick="smoothScroll(event,'faqs');closePanel()">FAQs</a>
+      <a href="about.html" onclick="closePanel()">About Us</a>
+      <a href="contact.html" onclick="closePanel()">Contact Us</a>
+    </nav>
+    <div class="panel-cta-area">
+      <p class="panel-cta-label">Ready to know more about your body?</p>
+      <a href="quiz.html" class="btn-panel-cta">Take Health Quiz &rarr;</a>
+    </div>
+  </div>
+
+  <!-- ── Hero ────────────────────────────────────────── -->
+  <section id="hero">
+
+    <!-- Tree image stack -->
+    <div id="tree-stack">
+      <img src="tree-dormant.svg" class="tree-img" alt="" />
+      <img src="tree-glow.svg" class="tree-img tree-glow-layer" alt="" />
+    </div>
+
+    <!-- Hero text -->
+    <div class="hero-content">
+      <div class="hero-headline-grid">
+        <p class="hero-intro">Start Your Journey To</p>
+        <div id="rotating-phrase">
+          <span class="phrase active">Reducing Medication</span>
+          <span class="phrase">Preventing Sickness</span>
+          <span class="phrase">Optimizing Health</span>
+        </div>
+      </div>
+      <p class="hero-para">Neav is your personal health manager — improving your body's functions and decelerating aging through personalised metabolic reset protocols.</p>
+      <p class="hero-subline">First step is knowing how healthy you really are.</p>
+      <div class="hero-btn-row">
+        <a href="quiz.html" class="btn-quiz">Take Health Quiz &rarr;</a>
+        <a href="#protocol" class="btn-why" onclick="smoothScroll(event,'protocol')">Why Neav?</a>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ── Protocol ────────────────────────────────────── -->
+  <section id="protocol">
+    <p class="section-label">Our Signature Programme</p>
+    <h2 class="section-heading">The Metabolic Reset Protocol</h2>
+    <p class="section-subtext">A 3-month guided journey from where you are to where you deserve to be — biologically.</p>
+
+    <div class="timeline">
+
+      <div class="timeline-step">
+        <div class="step-circle">1</div>
+        <div class="step-content">
+          <div class="step-title">Deep Diagnostic Assessment</div>
+          <p class="step-desc">Comprehensive blood panels, metabolic markers, hormonal profiling, and wearable data — we find what others miss.</p>
+        </div>
+      </div>
+
+      <div class="timeline-step">
+        <div class="step-circle">2</div>
+        <div class="step-content">
+          <div class="step-title">Biological Age &amp; Baseline Report</div>
+          <p class="step-desc">You receive a detailed report revealing your biological age, key risk areas, and the gap between where you are and where you should be.</p>
+        </div>
+      </div>
+
+      <div class="timeline-step">
+        <div class="step-circle">3</div>
+        <div class="step-content">
+          <div class="step-title">Personalised Protocol Design</div>
+          <p class="step-desc">Our MD designs a protocol specific to your biology — covering nutrition, supplementation, sleep, movement, and targeted therapies.</p>
+        </div>
+      </div>
+
+      <div class="timeline-step">
+        <div class="step-circle">4</div>
+        <div class="step-content">
+          <div class="step-title">Ongoing Optimisation &amp; Check-ins</div>
+          <p class="step-desc">Fortnightly check-ins, real-time adjustments, and continuous monitoring to ensure you're moving in the right direction.</p>
+        </div>
+      </div>
+
+      <div class="timeline-step">
+        <div class="step-circle">5</div>
+        <div class="step-content">
+          <div class="step-title">End-of-Protocol Review</div>
+          <p class="step-desc">At 3 months, we reassess everything. You see exactly how far you've come — and what comes next.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="transform-line">
+      <span class="transform-before">Fatigued, reactive, guessing</span>
+      <span class="transform-arrow">&#8594;</span>
+      <span class="transform-after">Optimised, informed, in control</span>
+    </div>
+
+    <a href="quiz.html" class="btn-primary">Begin Your Reset &rarr;</a>
+  </section>
+
+  <!-- ── FAQs ────────────────────────────────────────── -->
+  <section id="faqs">
+    <h2 class="section-heading">Frequently Asked Questions</h2>
+
+    <div class="faq-list">
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Who is Neav Health for?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Neav is for individuals who are curious about their health — whether you're a working professional dealing with fatigue and metabolic issues, or a family member who wants to give their parents the gift of proactive, expert-led healthcare. We want you to proactively take action for a healthy life without having to build a lifestyle dependence on medication.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          What makes Neav different from a regular doctor or clinic?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>We don't treat symptoms — we investigate root causes. Our approach combines advanced diagnostics, personalised protocols, and ongoing medical supervision in a way that a standard clinic visit simply cannot offer.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Do I need to visit in person?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Your initial consultation is virtual. Some diagnostics and therapies may require an in-person visit in Delhi NCR, which we coordinate for you.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          What is the Metabolic Reset Protocol?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>It's our 3-month signature programme that takes you from a complete diagnostic baseline to a fully personalised health protocol — with check-ins, adjustments, and a final review.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          How is this different from health packages I see at labs?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Lab packages give you numbers. We give you answers. Our expert physician interprets your results in the context of your life, your symptoms, and your goals — and builds a plan around them.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          What does it cost?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Our programmes are priced for individuals who are serious about results. Pricing is discussed during your free consultation so we can match you to the right programme.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          Can I gift this to a parent?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Yes — our Gift of Health programme is specifically designed for this. It includes everything the recipient needs, coordinated entirely through you.</p>
+        </div>
+      </div>
+
+      <div class="faq-item">
+        <button class="faq-question" onclick="toggleFaq(this)">
+          How do I get started?
+          <span class="faq-icon">+</span>
+        </button>
+        <div class="faq-answer">
+          <p>Take the free Health Assessment and we will schedule a free consultation directly with our expert physician. Both options are available on this page.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── Footer ──────────────────────────────────────── -->
+  <footer>
+    <div class="footer-grid">
+
+      <div class="footer-logo">
+        <img src="neav_logo.png" alt="Neav Health" />
+        <p class="footer-tagline">Precision health for those who take it seriously.</p>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Quick Links</div>
+        <div class="footer-links">
+          <a href="#protocol" onclick="smoothScroll(event,'protocol')">The Metabolic Reset Protocol</a>
+          <a href="services.html">Our Services</a>
+          <a href="quiz.html">Health Assessment</a>
+          <a href="gift.html">Gift of Health</a>
+          <a href="#faqs" onclick="smoothScroll(event,'faqs')">FAQs</a>
+        </div>
+      </div>
+
+      <div>
+        <div class="footer-col-title">Contact &amp; Legal</div>
+        <div class="footer-contact">
+          <a href="mailto:support@neav.health">support@neav.health</a>
+          <a href="https://wa.me/911234567890" target="_blank" rel="noopener">WhatsApp Us</a>
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="terms.html">Terms &amp; Conditions</a>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="footer-bottom">
+      <p>&copy; 2025 Neav Health. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    function smoothScroll(e, id) {
+      e.preventDefault();
+      var el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function openPanel() {
+      document.getElementById('side-panel').classList.add('open');
+      document.getElementById('panel-overlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePanel() {
+      document.getElementById('side-panel').classList.remove('open');
+      document.getElementById('panel-overlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closePanel(); });
+
+    function toggleFaq(btn) {
+      var item = btn.closest('.faq-item');
+      var isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(function(el) {
+        el.classList.remove('open');
+      });
+      if (!isOpen) item.classList.add('open');
+    }
+
+    (function() {
+      const phrases = document.querySelectorAll('#rotating-phrase .phrase');
+      let current = 0;
+      setInterval(() => {
+        phrases[current].classList.remove('active');
+        current = (current + 1) % phrases.length;
+        phrases[current].classList.add('active');
+      }, 2500);
+    })();
+  </script>
+</body>
+</html>

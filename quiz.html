@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Health Assessment — Neav Health</title>
+<link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@1,400;1,500;1,600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #13105D;
+    --navy-dark: #0D0B47;
+    --teal: #017584;
+    --teal-light: #01909f;
+    --white: #ffffff;
+    --off-white: #F7F8FC;
+    --grey-light: #E8EAF2;
+    --grey-mid: #9096B8;
+    --grey-text: #555A7A;
+    --font-main: 'Jost', sans-serif;
+    --font-accent: 'Cormorant Garamond', serif;
+  }
+
+  html, body {
+    height: 100%;
+    font-family: var(--font-main);
+    background: var(--off-white);
+    color: var(--navy);
+    overflow: hidden;
+  }
+
+  /* ── SHELL ── */
+  #quiz-shell {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Ambient background pulse */
+  #quiz-shell::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 70% 40%, rgba(1,117,132,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── PROGRESS BAR ── */
+  #progress-bar-wrap {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 7px;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 100;
+  }
+  #progress-bar {
+    height: 100%;
+    background: var(--navy);
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  /* ── LOGO ── */
+  #quiz-logo {
+    position: fixed;
+    top: 24px; left: 40px;
+    z-index: 100;
+  }
+  #quiz-logo img {
+    height: 32px;
+    filter: brightness(1) invert(0);
+    opacity: 0.9;
+  }
+
+  /* ── STEP COUNTER ── */
+  #step-counter {
+    position: fixed;
+    top: 28px; right: 40px;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.5px;
+    z-index: 100;
+  }
+
+  /* ── SCREEN CONTAINER ── */
+  #screen-container {
+    width: 100%;
+    max-width: 640px;
+    padding: 0 24px;
+    position: relative;
+  }
+
+  /* ── SCREENS ── */
+  .screen {
+    position: absolute;
+    top: 50%;
+    left: 24px; right: 24px;
+    transform: translateY(-50%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .screen.entering {
+    opacity: 0;
+    transform: translateY(calc(-50% + 24px));
+  }
+  .screen.active {
+    opacity: 1;
+    transform: translateY(-50%);
+    pointer-events: all;
+  }
+  .screen.leaving {
+    opacity: 0;
+    transform: translateY(calc(-50% - 24px));
+  }
+
+  /* ── INTRO SCREENS ── */
+  .intro-screen {
+    text-align: center;
+  }
+  .intro-screen .intro-quote {
+    font-family: var(--font-accent);
+    font-style: italic;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 500;
+    line-height: 1.3;
+    color: var(--navy);
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .intro-screen .intro-quote em {
+    color: var(--teal-light);
+  }
+  .intro-screen .intro-sub {
+    margin-top: 20px;
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.45);
+    letter-spacing: 0.3px;
+  }
+
+  /* ── DIVIDER SCREENS ── */
+  .divider-screen {
+    text-align: center;
+  }
+  .divider-screen .divider-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 24px;
+  }
+  .divider-screen .divider-text {
+    font-family: var(--font-accent);
+    font-style: italic;
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 500;
+    color: var(--navy);
+    line-height: 1.35;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* ── QUESTION SCREENS ── */
+  .q-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 12px;
+  }
+  .q-text {
+    font-size: clamp(25px, 3.5vw, 30px);
+    font-weight: 600;
+    line-height: 1.25;
+    color: var(--navy);
+    margin-bottom: 8px;
+  }
+  .q-hint {
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(0, 0, 0, 0.4);
+    margin-bottom: 32px;
+  }
+
+  /* ── OPTION CARDS (single select) ── */
+  .options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .option-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1.5px solid var(--navy);
+    border-radius: 10px;
+    padding: 14px 20px;
+    cursor: pointer;
+    font-family: var(--font-main);
+    font-size: 15px;
+    font-weight: 500;
+    /*color: rgba(255,255,255,0.85);*/
+    color: var(--navy);
+    text-align: left;
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .option-card:hover {
+    background:  rgba(19,16,93,0.8);
+    border-color: var(--navy);
+    color: var(--off-white);
+  }
+  .option-card.selected {
+    background: rgba(19, 16, 93, 0.15);
+    border-color: var(--navy);
+    color: var(--navy);
+  }
+  .option-card .opt-indicator {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--navy);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .option-card.selected .opt-indicator {
+    border-color: var(--navy-dark);
+    background: var(--navy);
+  }
+  .option-card.selected .opt-indicator::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--white);
+  }
+
+  /* ── CHECKBOX OPTIONS (multi-select) ── */
+  .options-grid.multi-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .option-card .opt-checkbox {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--navy);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.2s, background 0.2s;
+  }
+  .option-card.selected .opt-checkbox {
+    border-color: var(--navy);
+    background: var(--navy);
+  }
+  .option-card.selected .opt-checkbox::after {
+    content: '✓';
+    font-size: 11px;
+    color: var(--white);
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* ── CONTINUE BUTTON ── */
+  .continue-btn {
+    margin-top: 24px;
+    background: var(--navy);
+    color: var(--white);
+    border: none;
+    padding: 14px 36px;
+    border-radius: 6px;
+    font-family: var(--font-main);
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+    display: none;
+  }
+  .continue-btn.visible { display: inline-block; }
+  .continue-btn:hover { background: var(--navy-dark); }
+
+  /* ── FINAL FORM SCREEN ── */
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.6);
+    letter-spacing: 0.3px;
+    margin-bottom: 8px;
+    display: block;
+  }
+  .form-input, .form-select {
+    width: 100%;
+    background: rgba(255,255,255,0.07);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-family: var(--font-main);
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-input::placeholder { color: rgba(255,255,255,0.25); }
+  .form-input:focus, .form-select:focus {
+    border-color: var(--teal);
+  }
+  .form-select option { background: var(--navy-dark); color: var(--white); }
+  .form-select-wrap {
+    position: relative;
+  }
+  .form-select-wrap::after {
+    content: '▾';
+    position: absolute;
+    right: 18px; top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255,255,255,0.4);
+    pointer-events: none;
+    font-size: 14px;
+  }
+
+  /* ── RESULT SCREEN ── */
+  .result-screen {
+    text-align: center;
+  }
+  .result-eyebrow {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--teal);
+    margin-bottom: 20px;
+  }
+  .result-headline {
+    font-family: var(--font-accent);
+    font-style: italic;
+    font-size: clamp(26px, 4.5vw, 38px);
+    font-weight: 500;
+    line-height: 1.25;
+    color: var(--white);
+    max-width: 480px;
+    margin: 0 auto 20px;
+  }
+  .result-body {
+    font-size: 15px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    line-height: 1.7;
+    max-width: 440px;
+    margin: 0 auto 36px;
+  }
+  .result-cta {
+    display: inline-block;
+    background: var(--white);
+    color: var(--navy);
+    border: none;
+    padding: 16px 40px;
+    border-radius: 6px;
+    font-family: var(--font-main);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.2s;
+    margin-right: 12px;
+  }
+  .result-cta:hover { background: var(--off-white); }
+  .result-cta-secondary {
+    display: inline-block;
+    background: transparent;
+    color: var(--white);
+    border: 1.5px solid rgba(255,255,255,0.4);
+    padding: 15px 32px;
+    border-radius: 6px;
+    font-family: var(--font-main);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: border-color 0.2s;
+    margin-top: 12px;
+  }
+  .result-cta-secondary:hover { border-color: rgba(255,255,255,0.8); }
+
+  /* ── BACK BUTTON ── */
+  #back-btn {
+    position: fixed;
+    bottom: 36px; left: 40px;
+    background: none;
+    border: none;
+    color: var(--teal);
+    font-family: var(--font-main);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s;
+    z-index: 100;
+  }
+  #back-btn:hover { color: rgba(255,255,255,0.7); }
+  #back-btn.hidden { opacity: 0; pointer-events: none; }
+
+  /* ── MOBILE ── */
+  @media (max-width: 600px) {
+    #quiz-logo { left: 20px; }
+    #step-counter { right: 20px; }
+    #back-btn { left: 20px; bottom: 24px; }
+    .screen { left: 16px; right: 16px; }
+    .options-grid.multi-col { grid-template-columns: 1fr; }
+    .result-cta, .result-cta-secondary { display: block; margin-right: 0; }
+    .result-cta { margin-bottom: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+
+<div id="quiz-logo">
+  <a href="index.html"><img src="neav_logo.png" alt="Neav Health"></a>
+</div>
+
+<div id="step-counter"></div>
+<button id="back-btn" class="hidden" onclick="goBack()">← Back</button>
+
+<div id="quiz-shell">
+  <div id="screen-container">
+
+    <!-- SCREEN 0: Intro A -->
+    <div class="screen intro-screen active" id="s0">
+      <p class="intro-quote">We want a <em>healthy</em> and <em>long life</em><br> for you and your loved ones.</p>
+    </div>
+
+    <!-- SCREEN 1: Intro B -->
+    <div class="screen intro-screen" id="s1">
+      <p class="intro-quote">Lets understand what brings you here.</p>
+      <p class="intro-sub">This takes about 2 minutes.</p>
+    </div>
+
+    <!-- SCREEN 2: Q1 -->
+    <div class="screen" id="s2">
+      <div class="q-label">Question 1 of 9</div>
+      <div class="q-text">Who are you taking<br>this quiz for?</div>
+      <div class="q-hint">This helps us personalise your results.</div>
+      <div class="options-grid" id="q1-options">
+        <button class="option-card" onclick="selectSingle(this,'q1',0)"><span class="opt-indicator"></span>Myself</button>
+        <button class="option-card" onclick="selectSingle(this,'q1',1)"><span class="opt-indicator"></span>A parent</button>
+        <button class="option-card" onclick="selectSingle(this,'q1',2)"><span class="opt-indicator"></span>My spouse or partner</button>
+        <button class="option-card" onclick="selectSingle(this,'q1',3)"><span class="opt-indicator"></span>Someone else</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 3: Q2 -->
+    <div class="screen" id="s3">
+      <div class="q-label">Question 2 of 9</div>
+      <div class="q-text" id="q2-text">What's your health<br>goal right now?</div>
+      <div class="options-grid" id="q2-options">
+        <button class="option-card" onclick="selectSingle(this,'q2',0)"><span class="opt-indicator"></span><span id="q2-opt0">Improve my symptoms</span></button>
+        <button class="option-card" onclick="selectSingle(this,'q2',1)"><span class="opt-indicator"></span><span id="q2-opt1">Prevent future disease</span></button>
+        <button class="option-card" onclick="selectSingle(this,'q2',2)"><span class="opt-indicator"></span><span id="q2-opt2">Reduce meds &amp; improve lifestyle</span></button>
+        <button class="option-card" onclick="selectSingle(this,'q2',3)"><span class="opt-indicator"></span><span id="q2-opt3">Optimise performance &amp; longevity</span></button>
+      </div>
+    </div>
+
+    <!-- SCREEN 4: Q3 multi-select -->
+    <div class="screen" id="s4">
+      <div class="q-label">Question 3 of 9</div>
+      <div class="q-text">Which areas are you<br>most focused on?</div>
+      <div class="q-hint">Select all that apply.</div>
+      <div class="options-grid multi-col" id="q3-options">
+        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Focus &amp; energy</button>
+        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Sleep &amp; recovery</button>
+        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Metabolic health &amp; weight loss</button>
+        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Heart health</button>
+        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Inflammation &amp; immunity</button>
+        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Digestive &amp; gut health</button>
+        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Skin &amp; hair health</button>
+      </div>
+      <button class="continue-btn" id="q3-continue" onclick="advance()">Continue →</button>
+    </div>
+
+    <!-- SCREEN 5: Q4 multi-select -->
+    <div class="screen" id="s5">
+      <div class="q-label">Question 4 of 9</div>
+      <div class="q-text">Which of these<br>apply to you?</div>
+      <div class="q-hint">Select all that apply — symptoms and diagnosed conditions both count.</div>
+      <div class="options-grid multi-col" id="q4-options">
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Fatigue</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Brain fog</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Poor sleep</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Low energy</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Body / joint pain</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Headaches</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Digestive issues</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Stress / anxiety</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Trouble losing weight</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Hair / skin issues</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Diabetes / pre-diabetes</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>High blood pressure</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Thyroid issues</button>
+        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>High cholesterol</button>
+        <button class="option-card exclusive" onclick="selectExclusive(this,'q4',true)"><span class="opt-checkbox"></span>I'm not sure</button>
+        <button class="option-card exclusive" onclick="selectExclusive(this,'q4',false)"><span class="opt-checkbox"></span>None of the above</button>
+      </div>
+      <button class="continue-btn" id="q4-continue" onclick="advance()">Continue →</button>
+    </div>
+
+    <!-- SCREEN 6: Q5 -->
+    <div class="screen" id="s6">
+      <div class="q-label">Question 5 of 9</div>
+      <div class="q-text">When did you last get<br>a full blood panel done?</div>
+      <div class="options-grid" id="q5-options">
+        <button class="option-card" onclick="selectSingle(this,'q5',0)"><span class="opt-indicator"></span>Within the last 6 months</button>
+        <button class="option-card" onclick="selectSingle(this,'q5',1)"><span class="opt-indicator"></span>6 months to 2 years ago</button>
+        <button class="option-card" onclick="selectSingle(this,'q5',2)"><span class="opt-indicator"></span>More than 2 years ago</button>
+        <button class="option-card" onclick="selectSingle(this,'q5',3)"><span class="opt-indicator"></span>Never</button>
+        <button class="option-card" onclick="selectSingle(this,'q5',4)"><span class="opt-indicator"></span>I'm not sure</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 7: Section divider — lifestyle -->
+    <div class="screen divider-screen" id="s7">
+      <div class="divider-label">Almost there</div>
+      <div class="divider-text">A few quick questions<br>about your everyday habits.</div>
+    </div>
+
+    <!-- SCREEN 8: Q6 -->
+    <div class="screen" id="s8">
+      <div class="q-label">Question 6 of 9</div>
+      <div class="q-text">How many hours of<br>sleep do you get each night?</div>
+      <div class="options-grid" id="q6-options">
+        <button class="option-card" onclick="selectSingle(this,'q6',0)"><span class="opt-indicator"></span>Less than 5 hours</button>
+        <button class="option-card" onclick="selectSingle(this,'q6',1)"><span class="opt-indicator"></span>5–6 hours</button>
+        <button class="option-card" onclick="selectSingle(this,'q6',2)"><span class="opt-indicator"></span>6–7 hours</button>
+        <button class="option-card" onclick="selectSingle(this,'q6',3)"><span class="opt-indicator"></span>7–8 hours</button>
+        <button class="option-card" onclick="selectSingle(this,'q6',4)"><span class="opt-indicator"></span>More than 8 hours</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 9: Q7 -->
+    <div class="screen" id="s9">
+      <div class="q-label">Question 7 of 9</div>
+      <div class="q-text">How often do you<br>exercise each week?</div>
+      <div class="options-grid" id="q7-options">
+        <button class="option-card" onclick="selectSingle(this,'q7',0)"><span class="opt-indicator"></span>Less than once a week</button>
+        <button class="option-card" onclick="selectSingle(this,'q7',1)"><span class="opt-indicator"></span>1–2 times</button>
+        <button class="option-card" onclick="selectSingle(this,'q7',2)"><span class="opt-indicator"></span>3–4 times</button>
+        <button class="option-card" onclick="selectSingle(this,'q7',3)"><span class="opt-indicator"></span>5–6 times</button>
+        <button class="option-card" onclick="selectSingle(this,'q7',4)"><span class="opt-indicator"></span>Daily</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 10: Q8 -->
+    <div class="screen" id="s10">
+      <div class="q-label">Question 8 of 9</div>
+      <div class="q-text">How do you feel 30 minutes<br>after waking up?</div>
+      <div class="options-grid" id="q8-options">
+        <button class="option-card" onclick="selectSingle(this,'q8',0)"><span class="opt-indicator"></span>Energised — ready to go</button>
+        <button class="option-card" onclick="selectSingle(this,'q8',1)"><span class="opt-indicator"></span>Steady — takes a few minutes</button>
+        <button class="option-card" onclick="selectSingle(this,'q8',2)"><span class="opt-indicator"></span>Somewhat low — need coffee or tea</button>
+        <button class="option-card" onclick="selectSingle(this,'q8',3)"><span class="opt-indicator"></span>Very low / exhausted — most mornings</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 11: Q9 -->
+    <div class="screen" id="s11">
+      <div class="q-label">Question 9 of 9</div>
+      <div class="q-text">Bloating, acidity or<br>heartburn after meals?</div>
+      <div class="options-grid" id="q9-options">
+        <button class="option-card" onclick="selectSingle(this,'q9',0)"><span class="opt-indicator"></span>Never or rarely</button>
+        <button class="option-card" onclick="selectSingle(this,'q9',1)"><span class="opt-indicator"></span>A few times a month</button>
+        <button class="option-card" onclick="selectSingle(this,'q9',2)"><span class="opt-indicator"></span>A few times a week</button>
+        <button class="option-card" onclick="selectSingle(this,'q9',3)"><span class="opt-indicator"></span>Almost every meal</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 12: Final demographics -->
+    <div class="screen" id="s12">
+      <div class="q-label">Almost done</div>
+      <div class="q-text">Quick details to<br>personalise your results</div>
+      <div class="q-hint">This helps us personalise the recommendations accurately.</div>
+      <div style="margin-top: 28px;">
+        <div class="form-group">
+          <label class="form-label">Age</label>
+          <input class="form-input" id="input-age" type="number" placeholder="Enter your age" min="18" max="100">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Gender</label>
+          <div class="form-select-wrap">
+            <select class="form-select" id="input-gender">
+              <option value="" disabled selected>Select gender</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="other">Other / Prefer not to say</option>
+            </select>
+          </div>
+        </div>
+        <button class="continue-btn visible" onclick="submitQuiz()" style="margin-top:8px;">Get My Biological Age →</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 13: Result -->
+    <div class="screen result-screen" id="s13">
+      <div class="result-eyebrow">Your Assessment</div>
+      <div class="result-headline">Your body may be<br>aging faster than you think.</div>
+      <div class="result-body">6 in 10 Indians are biologically older than their actual age. Book a free consult with our physician to find out exactly where you stand — and what to do about it.</div>
+      <div>
+        <a href="https://calendly.com/neav-health" target="_blank" class="result-cta">Book Free Consultation →</a>
+      </div>
+      <div style="margin-top: 16px;">
+        <a href="https://wa.me/919999999999" target="_blank" class="result-cta-secondary">Or message us on WhatsApp</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ── STATE ──
+  const TOTAL_SCREENS = 14; // 0–13
+  let current = 0;
+  let history = [];
+  const answers = {};
+
+  // Screens that auto-advance (intros, divider)
+  const AUTO_ADVANCE = { 0: 2500, 1: 2500, 7: 2500 };
+  // Question screens with their q-keys for conditional logic
+  const SINGLE_SELECT_SCREENS = [2, 3, 6, 8, 9, 10, 11];
+  const MULTI_SELECT_SCREENS = [4, 5];
+
+  let autoTimer = null;
+
+  // ── PROGRESS ──
+  function updateProgress() {
+    // Count only question/form screens for progress (screens 2-12 = 11 screens)
+    const questionScreens = 11;
+    const questionIndex = Math.max(0, current - 2);
+    const pct = current <= 1 ? 0 : Math.min(100, Math.round((questionIndex / questionScreens) * 100));
+    document.getElementById('progress-bar').style.width = pct + '%';
+
+    // Step counter (only for Q screens)
+    const counter = document.getElementById('step-counter');
+    if (current >= 2 && current <= 11) {
+      const qNum = current - 1; // screens 2-11 map to Q1-Q9 + divider
+      counter.textContent = '';
+    } else {
+      counter.textContent = '';
+    }
+
+    // Back button
+    const backBtn = document.getElementById('back-btn');
+    if (history.length > 2 && current < 13) {
+      backBtn.classList.remove('hidden');
+    } else {
+      backBtn.classList.add('hidden');
+    }
+  }
+
+  // ── NAVIGATION ──
+  function goTo(next) {
+    if (autoTimer) clearTimeout(autoTimer);
+
+    const currentEl = document.getElementById('s' + current);
+    const nextEl = document.getElementById('s' + next);
+
+    currentEl.classList.remove('active');
+    currentEl.classList.add('leaving');
+
+    nextEl.classList.add('entering');
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        nextEl.classList.remove('entering');
+        nextEl.classList.add('active');
+      });
+    });
+
+    setTimeout(() => {
+      currentEl.classList.remove('leaving');
+    }, 650);
+
+    history.push(current);
+    current = next;
+    updateProgress();
+
+    // Conditional text for Q2 based on Q1
+    if (next === 3) applyQ1Conditional();
+
+    // Auto-advance for intro/divider screens
+    if (AUTO_ADVANCE[next] !== undefined) {
+      autoTimer = setTimeout(() => advance(), AUTO_ADVANCE[next]);
+    }
+  }
+
+  function advance() {
+    goTo(current + 1);
+  }
+
+  function goBack() {
+    if (history.length === 0) return;
+    if (autoTimer) clearTimeout(autoTimer);
+
+    const prev = history.pop();
+    const currentEl = document.getElementById('s' + current);
+    const prevEl = document.getElementById('s' + prev);
+
+    currentEl.classList.remove('active');
+    prevEl.classList.add('active');
+
+    current = prev;
+    updateProgress();
+  }
+
+  // ── CONDITIONAL LOGIC ──
+  function applyQ1Conditional() {
+    const q1 = answers['q1'];
+    const isMyself = q1 === 0;
+    const pronoun = isMyself ? 'my' : 'their';
+
+    document.getElementById('q2-opt0').textContent = 'Improve ' + pronoun + ' symptoms';
+    document.getElementById('q2-opt2').textContent = 'Reduce meds & improve ' + pronoun + ' lifestyle';
+  }
+
+  // ── SELECTION ──
+  function selectSingle(btn, key, val) {
+    const container = btn.closest('.options-grid');
+    container.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
+    btn.classList.add('selected');
+    answers[key] = val;
+    setTimeout(() => advance(), 340);
+  }
+
+  function toggleMulti(btn, key) {
+    btn.classList.toggle('selected');
+    if (!answers[key]) answers[key] = [];
+    const label = btn.textContent.trim();
+    if (btn.classList.contains('selected')) {
+      answers[key].push(label);
+    } else {
+      answers[key] = answers[key].filter(v => v !== label);
+    }
+    updateContinueBtn(key);
+  }
+
+  function selectExclusive(btn, key, isSure) {
+    // Clear all non-exclusive selections
+    const container = btn.closest('.options-grid');
+    container.querySelectorAll('.option-card:not(.exclusive)').forEach(c => {
+      c.classList.remove('selected');
+    });
+    // Toggle this exclusive option (clear others)
+    container.querySelectorAll('.option-card.exclusive').forEach(c => {
+      if (c !== btn) c.classList.remove('selected');
+    });
+    btn.classList.toggle('selected');
+    answers[key] = btn.classList.contains('selected') ? [btn.textContent.trim()] : [];
+    updateContinueBtn(key);
+  }
+
+  function updateContinueBtn(key) {
+    const btnId = key + '-continue';
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const hasSelection = answers[key] && answers[key].length > 0;
+    if (hasSelection) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  }
+
+  // ── SUBMIT ──
+  function submitQuiz() {
+    const age = document.getElementById('input-age').value;
+    const gender = document.getElementById('input-gender').value;
+    const phone = document.getElementById('input-phone').value;
+
+    if (!age || !gender || !phone) {
+      alert('Please fill in all fields to continue.');
+      return;
+    }
+
+    answers['demographics'] = { age, gender, phone };
+    console.log('Quiz answers:', answers);
+    // → Here you would POST to your backend / Formspree / Airtable
+
+    goTo(13);
+  }
+
+  // ── INIT ──
+  document.addEventListener('DOMContentLoaded', () => {
+    updateProgress();
+    // Auto-start intro sequence
+    autoTimer = setTimeout(() => advance(), AUTO_ADVANCE[0]);
+  });
+</script>
+</body>
+</html>
