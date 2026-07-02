@@ -28,26 +28,16 @@
     background: var(--off-white);
     color: var(--navy);
     overflow: hidden;
+    transition: background 0.5s ease;
   }
+  body.navy-bg { background: var(--navy); }
+  body.navy-bg #quiz-logo img { filter: brightness(0) invert(1); }
+  body.navy-bg #back-btn { color: rgba(255,255,255,0.5); }
+  body.navy-bg #back-btn:hover { color: rgba(255,255,255,0.9); }
 
   /* ── SHELL ── */
-  #quiz-shell {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-  }
-
-  /* Ambient background pulse */
-  #quiz-shell::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse 60% 50% at 70% 40%, rgba(1,117,132,0.12) 0%, transparent 70%);
-    pointer-events: none;
-  }
+  #quiz-shell { display: none; }
+  #screen-container { display: none; }
 
   /* ── PROGRESS BAR ── */
   #progress-bar-wrap {
@@ -95,29 +85,34 @@
     position: relative;
   }
 
-  /* ── SCREENS ── */
+  /* ── SCREENS — all scrollable ── */
   .screen {
-    position: absolute;
-    top: 50%;
-    left: 24px; right: 24px;
-    transform: translateY(-50%);
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
     opacity: 0;
     pointer-events: none;
-    transition: opacity 0.6s ease, transform 0.6s ease;
+    transition: opacity 0.6s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 100px 24px 80px;
   }
-  .screen.entering {
-    opacity: 0;
-    transform: translateY(calc(-50% + 24px));
+  .screen-inner {
+    width: 100%;
+    max-width: 640px;
   }
-  .screen.active {
-    opacity: 1;
-    transform: translateY(-50%);
-    pointer-events: all;
+  .screen.intro-screen,
+  .screen.divider-screen,
+  .screen.result-screen {
+    justify-content: center;
+    text-align: center;
   }
-  .screen.leaving {
-    opacity: 0;
-    transform: translateY(calc(-50% - 24px));
-  }
+  .screen.entering { opacity: 0; }
+  .screen.active { opacity: 1; pointer-events: all; }
+  .screen.leaving { opacity: 0; }
 
   /* ── INTRO SCREENS ── */
   .intro-screen {
@@ -129,7 +124,7 @@
     font-size: clamp(28px, 5vw, 42px);
     font-weight: 500;
     line-height: 1.3;
-    color: var(--navy);
+    color: var(--white);
     max-width: 680px;
     margin: 0 auto;
   }
@@ -161,7 +156,7 @@
     font-style: italic;
     font-size: clamp(24px, 4vw, 36px);
     font-weight: 500;
-    color: var(--navy);
+    color: var(--white);
     line-height: 1.35;
     max-width: 600px;
     margin: 0 auto;
@@ -438,195 +433,213 @@
 <div id="step-counter"></div>
 <button id="back-btn" class="hidden" onclick="goBack()">← Back</button>
 
-<div id="quiz-shell">
-  <div id="screen-container">
+<!-- SCREEN 0: Intro A -->
+<div class="screen intro-screen active" id="s0">
+  <div class="screen-inner">
+    <p class="intro-quote">We want a <em>healthy</em> and <em>long life</em><br>for you and your loved ones.</p>
+  </div>
+</div>
 
-    <!-- SCREEN 0: Intro A -->
-    <div class="screen intro-screen active" id="s0">
-      <p class="intro-quote">We want a <em>healthy</em> and <em>long life</em><br> for you and your loved ones.</p>
+<!-- SCREEN 1: Intro B -->
+<div class="screen intro-screen" id="s1">
+  <div class="screen-inner">
+    <p class="intro-quote">Let's understand what brings you here.</p>
+    <p class="intro-sub">This takes about 2 minutes.</p>
+  </div>
+</div>
+
+<!-- SCREEN 2: Q1 -->
+<div class="screen" id="s2">
+  <div class="screen-inner">
+    <div class="q-label">Question 1 of 9</div>
+    <div class="q-text">Who are you taking<br>this quiz for?</div>
+    <div class="q-hint">This helps us personalise your results.</div>
+    <div class="options-grid" id="q1-options">
+      <button class="option-card" onclick="selectSingle(this,'q1',0)"><span class="opt-indicator"></span>Myself</button>
+      <button class="option-card" onclick="selectSingle(this,'q1',1)"><span class="opt-indicator"></span>A parent</button>
+      <button class="option-card" onclick="selectSingle(this,'q1',2)"><span class="opt-indicator"></span>My spouse or partner</button>
+      <button class="option-card" onclick="selectSingle(this,'q1',3)"><span class="opt-indicator"></span>Someone else</button>
     </div>
+  </div>
+</div>
 
-    <!-- SCREEN 1: Intro B -->
-    <div class="screen intro-screen" id="s1">
-      <p class="intro-quote">Lets understand what brings you here.</p>
-      <p class="intro-sub">This takes about 2 minutes.</p>
+<!-- SCREEN 3: Q2 -->
+<div class="screen" id="s3">
+  <div class="screen-inner">
+    <div class="q-label">Question 2 of 9</div>
+    <div class="q-text" id="q2-text">What's your health<br>goal right now?</div>
+    <div class="options-grid" id="q2-options">
+      <button class="option-card" onclick="selectSingle(this,'q2',0)"><span class="opt-indicator"></span><span id="q2-opt0">Improve my symptoms</span></button>
+      <button class="option-card" onclick="selectSingle(this,'q2',1)"><span class="opt-indicator"></span><span id="q2-opt1">Prevent future disease</span></button>
+      <button class="option-card" onclick="selectSingle(this,'q2',2)"><span class="opt-indicator"></span><span id="q2-opt2">Reduce meds &amp; improve lifestyle</span></button>
+      <button class="option-card" onclick="selectSingle(this,'q2',3)"><span class="opt-indicator"></span><span id="q2-opt3">Optimise performance &amp; longevity</span></button>
     </div>
+  </div>
+</div>
 
-    <!-- SCREEN 2: Q1 -->
-    <div class="screen" id="s2">
-      <div class="q-label">Question 1 of 9</div>
-      <div class="q-text">Who are you taking<br>this quiz for?</div>
-      <div class="q-hint">This helps us personalise your results.</div>
-      <div class="options-grid" id="q1-options">
-        <button class="option-card" onclick="selectSingle(this,'q1',0)"><span class="opt-indicator"></span>Myself</button>
-        <button class="option-card" onclick="selectSingle(this,'q1',1)"><span class="opt-indicator"></span>A parent</button>
-        <button class="option-card" onclick="selectSingle(this,'q1',2)"><span class="opt-indicator"></span>My spouse or partner</button>
-        <button class="option-card" onclick="selectSingle(this,'q1',3)"><span class="opt-indicator"></span>Someone else</button>
+<!-- SCREEN 4: Q3 multi-select -->
+<div class="screen" id="s4">
+  <div class="screen-inner">
+    <div class="q-label">Question 3 of 9</div>
+    <div class="q-text">Which areas are you<br>most focused on?</div>
+    <div class="q-hint">Select all that apply.</div>
+    <div class="options-grid multi-col" id="q3-options">
+      <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Focus &amp; energy</button>
+      <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Sleep &amp; recovery</button>
+      <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Metabolic health &amp; weight loss</button>
+      <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Heart health</button>
+      <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Inflammation &amp; immunity</button>
+      <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Digestive &amp; gut health</button>
+      <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Skin &amp; hair health</button>
+    </div>
+    <button class="continue-btn" id="q3-continue" onclick="advance()">Continue →</button>
+  </div>
+</div>
+
+<!-- SCREEN 5: Q4 multi-select -->
+<div class="screen" id="s5">
+  <div class="screen-inner">
+    <div class="q-label">Question 4 of 9</div>
+    <div class="q-text">Which of these<br>apply to you?</div>
+    <div class="q-hint">Select all that apply — symptoms and diagnosed conditions both count.</div>
+    <div class="options-grid multi-col" id="q4-options">
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Fatigue</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Brain fog</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Poor sleep</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Low energy</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Body / joint pain</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Headaches</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Digestive issues</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Stress / anxiety</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Trouble losing weight</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Hair / skin issues</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Diabetes / pre-diabetes</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>High blood pressure</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Thyroid issues</button>
+      <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>High cholesterol</button>
+      <button class="option-card exclusive" onclick="selectExclusive(this,'q4',true)"><span class="opt-checkbox"></span>I'm not sure</button>
+      <button class="option-card exclusive" onclick="selectExclusive(this,'q4',false)"><span class="opt-checkbox"></span>None of the above</button>
+    </div>
+    <button class="continue-btn" id="q4-continue" onclick="advance()">Continue →</button>
+  </div>
+</div>
+
+<!-- SCREEN 6: Q5 -->
+<div class="screen" id="s6">
+  <div class="screen-inner">
+    <div class="q-label">Question 5 of 9</div>
+    <div class="q-text">When did you last get<br>a full blood panel done?</div>
+    <div class="options-grid" id="q5-options">
+      <button class="option-card" onclick="selectSingle(this,'q5',0)"><span class="opt-indicator"></span>Within the last 6 months</button>
+      <button class="option-card" onclick="selectSingle(this,'q5',1)"><span class="opt-indicator"></span>6 months to 2 years ago</button>
+      <button class="option-card" onclick="selectSingle(this,'q5',2)"><span class="opt-indicator"></span>More than 2 years ago</button>
+      <button class="option-card" onclick="selectSingle(this,'q5',3)"><span class="opt-indicator"></span>Never</button>
+      <button class="option-card" onclick="selectSingle(this,'q5',4)"><span class="opt-indicator"></span>I'm not sure</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 7: Section divider -->
+<div class="screen divider-screen" id="s7">
+  <div class="screen-inner">
+    <div class="divider-label">Almost there</div>
+    <div class="divider-text">A few quick questions<br>about your everyday habits.</div>
+  </div>
+</div>
+
+<!-- SCREEN 8: Q6 -->
+<div class="screen" id="s8">
+  <div class="screen-inner">
+    <div class="q-label">Question 6 of 9</div>
+    <div class="q-text">How many hours of<br>sleep do you get each night?</div>
+    <div class="options-grid" id="q6-options">
+      <button class="option-card" onclick="selectSingle(this,'q6',0)"><span class="opt-indicator"></span>Less than 5 hours</button>
+      <button class="option-card" onclick="selectSingle(this,'q6',1)"><span class="opt-indicator"></span>5–6 hours</button>
+      <button class="option-card" onclick="selectSingle(this,'q6',2)"><span class="opt-indicator"></span>6–7 hours</button>
+      <button class="option-card" onclick="selectSingle(this,'q6',3)"><span class="opt-indicator"></span>7–8 hours</button>
+      <button class="option-card" onclick="selectSingle(this,'q6',4)"><span class="opt-indicator"></span>More than 8 hours</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 9: Q7 -->
+<div class="screen" id="s9">
+  <div class="screen-inner">
+    <div class="q-label">Question 7 of 9</div>
+    <div class="q-text">How often do you<br>exercise each week?</div>
+    <div class="options-grid" id="q7-options">
+      <button class="option-card" onclick="selectSingle(this,'q7',0)"><span class="opt-indicator"></span>Less than once a week</button>
+      <button class="option-card" onclick="selectSingle(this,'q7',1)"><span class="opt-indicator"></span>1–2 times</button>
+      <button class="option-card" onclick="selectSingle(this,'q7',2)"><span class="opt-indicator"></span>3–4 times</button>
+      <button class="option-card" onclick="selectSingle(this,'q7',3)"><span class="opt-indicator"></span>5–6 times</button>
+      <button class="option-card" onclick="selectSingle(this,'q7',4)"><span class="opt-indicator"></span>Daily</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 10: Q8 -->
+<div class="screen" id="s10">
+  <div class="screen-inner">
+    <div class="q-label">Question 8 of 9</div>
+    <div class="q-text">How do you feel 30 minutes<br>after waking up?</div>
+    <div class="options-grid" id="q8-options">
+      <button class="option-card" onclick="selectSingle(this,'q8',0)"><span class="opt-indicator"></span>Energised — ready to go</button>
+      <button class="option-card" onclick="selectSingle(this,'q8',1)"><span class="opt-indicator"></span>Steady — takes a few minutes</button>
+      <button class="option-card" onclick="selectSingle(this,'q8',2)"><span class="opt-indicator"></span>Somewhat low — need coffee or tea</button>
+      <button class="option-card" onclick="selectSingle(this,'q8',3)"><span class="opt-indicator"></span>Very low / exhausted — most mornings</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 11: Q9 -->
+<div class="screen" id="s11">
+  <div class="screen-inner">
+    <div class="q-label">Question 9 of 9</div>
+    <div class="q-text">Bloating, acidity or<br>heartburn after meals?</div>
+    <div class="options-grid" id="q9-options">
+      <button class="option-card" onclick="selectSingle(this,'q9',0)"><span class="opt-indicator"></span>Never or rarely</button>
+      <button class="option-card" onclick="selectSingle(this,'q9',1)"><span class="opt-indicator"></span>A few times a month</button>
+      <button class="option-card" onclick="selectSingle(this,'q9',2)"><span class="opt-indicator"></span>A few times a week</button>
+      <button class="option-card" onclick="selectSingle(this,'q9',3)"><span class="opt-indicator"></span>Almost every meal</button>
+    </div>
+  </div>
+</div>
+
+<!-- SCREEN 12: Final demographics -->
+<div class="screen" id="s12">
+  <div class="screen-inner">
+    <div class="q-label">Almost done</div>
+    <div class="q-text">Quick details to<br>personalise your results</div>
+    <div class="q-hint">This helps us curate the plan for you.</div>
+    <div style="margin-top: 28px;">
+      <div class="form-group">
+        <label class="form-label">Age</label>
+        <input class="form-input" id="input-age" type="number" placeholder="Enter your age" min="18" max="100">
       </div>
-    </div>
-
-    <!-- SCREEN 3: Q2 -->
-    <div class="screen" id="s3">
-      <div class="q-label">Question 2 of 9</div>
-      <div class="q-text" id="q2-text">What's your health<br>goal right now?</div>
-      <div class="options-grid" id="q2-options">
-        <button class="option-card" onclick="selectSingle(this,'q2',0)"><span class="opt-indicator"></span><span id="q2-opt0">Improve my symptoms</span></button>
-        <button class="option-card" onclick="selectSingle(this,'q2',1)"><span class="opt-indicator"></span><span id="q2-opt1">Prevent future disease</span></button>
-        <button class="option-card" onclick="selectSingle(this,'q2',2)"><span class="opt-indicator"></span><span id="q2-opt2">Reduce meds &amp; improve lifestyle</span></button>
-        <button class="option-card" onclick="selectSingle(this,'q2',3)"><span class="opt-indicator"></span><span id="q2-opt3">Optimise performance &amp; longevity</span></button>
-      </div>
-    </div>
-
-    <!-- SCREEN 4: Q3 multi-select -->
-    <div class="screen" id="s4">
-      <div class="q-label">Question 3 of 9</div>
-      <div class="q-text">Which areas are you<br>most focused on?</div>
-      <div class="q-hint">Select all that apply.</div>
-      <div class="options-grid multi-col" id="q3-options">
-        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Focus &amp; energy</button>
-        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Sleep &amp; recovery</button>
-        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Metabolic health &amp; weight loss</button>
-        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Heart health</button>
-        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Inflammation &amp; immunity</button>
-        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Digestive &amp; gut health</button>
-        <button class="option-card" onclick="toggleMulti(this,'q3')"><span class="opt-checkbox"></span>Skin &amp; hair health</button>
-      </div>
-      <button class="continue-btn" id="q3-continue" onclick="advance()">Continue →</button>
-    </div>
-
-    <!-- SCREEN 5: Q4 multi-select -->
-    <div class="screen" id="s5">
-      <div class="q-label">Question 4 of 9</div>
-      <div class="q-text">Which of these<br>apply to you?</div>
-      <div class="q-hint">Select all that apply — symptoms and diagnosed conditions both count.</div>
-      <div class="options-grid multi-col" id="q4-options">
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Fatigue</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Brain fog</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Poor sleep</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Low energy</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Body / joint pain</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Headaches</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Digestive issues</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Stress / anxiety</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Trouble losing weight</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Hair / skin issues</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Diabetes / pre-diabetes</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>High blood pressure</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>Thyroid issues</button>
-        <button class="option-card" onclick="toggleMulti(this,'q4')"><span class="opt-checkbox"></span>High cholesterol</button>
-        <button class="option-card exclusive" onclick="selectExclusive(this,'q4',true)"><span class="opt-checkbox"></span>I'm not sure</button>
-        <button class="option-card exclusive" onclick="selectExclusive(this,'q4',false)"><span class="opt-checkbox"></span>None of the above</button>
-      </div>
-      <button class="continue-btn" id="q4-continue" onclick="advance()">Continue →</button>
-    </div>
-
-    <!-- SCREEN 6: Q5 -->
-    <div class="screen" id="s6">
-      <div class="q-label">Question 5 of 9</div>
-      <div class="q-text">When did you last get<br>a full blood panel done?</div>
-      <div class="options-grid" id="q5-options">
-        <button class="option-card" onclick="selectSingle(this,'q5',0)"><span class="opt-indicator"></span>Within the last 6 months</button>
-        <button class="option-card" onclick="selectSingle(this,'q5',1)"><span class="opt-indicator"></span>6 months to 2 years ago</button>
-        <button class="option-card" onclick="selectSingle(this,'q5',2)"><span class="opt-indicator"></span>More than 2 years ago</button>
-        <button class="option-card" onclick="selectSingle(this,'q5',3)"><span class="opt-indicator"></span>Never</button>
-        <button class="option-card" onclick="selectSingle(this,'q5',4)"><span class="opt-indicator"></span>I'm not sure</button>
-      </div>
-    </div>
-
-    <!-- SCREEN 7: Section divider — lifestyle -->
-    <div class="screen divider-screen" id="s7">
-      <div class="divider-label">Almost there</div>
-      <div class="divider-text">A few quick questions<br>about your everyday habits.</div>
-    </div>
-
-    <!-- SCREEN 8: Q6 -->
-    <div class="screen" id="s8">
-      <div class="q-label">Question 6 of 9</div>
-      <div class="q-text">How many hours of<br>sleep do you get each night?</div>
-      <div class="options-grid" id="q6-options">
-        <button class="option-card" onclick="selectSingle(this,'q6',0)"><span class="opt-indicator"></span>Less than 5 hours</button>
-        <button class="option-card" onclick="selectSingle(this,'q6',1)"><span class="opt-indicator"></span>5–6 hours</button>
-        <button class="option-card" onclick="selectSingle(this,'q6',2)"><span class="opt-indicator"></span>6–7 hours</button>
-        <button class="option-card" onclick="selectSingle(this,'q6',3)"><span class="opt-indicator"></span>7–8 hours</button>
-        <button class="option-card" onclick="selectSingle(this,'q6',4)"><span class="opt-indicator"></span>More than 8 hours</button>
-      </div>
-    </div>
-
-    <!-- SCREEN 9: Q7 -->
-    <div class="screen" id="s9">
-      <div class="q-label">Question 7 of 9</div>
-      <div class="q-text">How often do you<br>exercise each week?</div>
-      <div class="options-grid" id="q7-options">
-        <button class="option-card" onclick="selectSingle(this,'q7',0)"><span class="opt-indicator"></span>Less than once a week</button>
-        <button class="option-card" onclick="selectSingle(this,'q7',1)"><span class="opt-indicator"></span>1–2 times</button>
-        <button class="option-card" onclick="selectSingle(this,'q7',2)"><span class="opt-indicator"></span>3–4 times</button>
-        <button class="option-card" onclick="selectSingle(this,'q7',3)"><span class="opt-indicator"></span>5–6 times</button>
-        <button class="option-card" onclick="selectSingle(this,'q7',4)"><span class="opt-indicator"></span>Daily</button>
-      </div>
-    </div>
-
-    <!-- SCREEN 10: Q8 -->
-    <div class="screen" id="s10">
-      <div class="q-label">Question 8 of 9</div>
-      <div class="q-text">How do you feel 30 minutes<br>after waking up?</div>
-      <div class="options-grid" id="q8-options">
-        <button class="option-card" onclick="selectSingle(this,'q8',0)"><span class="opt-indicator"></span>Energised — ready to go</button>
-        <button class="option-card" onclick="selectSingle(this,'q8',1)"><span class="opt-indicator"></span>Steady — takes a few minutes</button>
-        <button class="option-card" onclick="selectSingle(this,'q8',2)"><span class="opt-indicator"></span>Somewhat low — need coffee or tea</button>
-        <button class="option-card" onclick="selectSingle(this,'q8',3)"><span class="opt-indicator"></span>Very low / exhausted — most mornings</button>
-      </div>
-    </div>
-
-    <!-- SCREEN 11: Q9 -->
-    <div class="screen" id="s11">
-      <div class="q-label">Question 9 of 9</div>
-      <div class="q-text">Bloating, acidity or<br>heartburn after meals?</div>
-      <div class="options-grid" id="q9-options">
-        <button class="option-card" onclick="selectSingle(this,'q9',0)"><span class="opt-indicator"></span>Never or rarely</button>
-        <button class="option-card" onclick="selectSingle(this,'q9',1)"><span class="opt-indicator"></span>A few times a month</button>
-        <button class="option-card" onclick="selectSingle(this,'q9',2)"><span class="opt-indicator"></span>A few times a week</button>
-        <button class="option-card" onclick="selectSingle(this,'q9',3)"><span class="opt-indicator"></span>Almost every meal</button>
-      </div>
-    </div>
-
-    <!-- SCREEN 12: Final demographics -->
-    <div class="screen" id="s12">
-      <div class="q-label">Almost done</div>
-      <div class="q-text">Quick details to<br>personalise your results</div>
-      <div class="q-hint">This helps us curate the plan for you.</div>
-      <div style="margin-top: 28px;">
-        <div class="form-group">
-          <label class="form-label">Age</label>
-          <input class="form-input" id="input-age" type="number" placeholder="Enter your age" min="18" max="100">
+      <div class="form-group">
+        <label class="form-label">Gender</label>
+        <div class="form-select-wrap">
+          <select class="form-select" id="input-gender">
+            <option value="" disabled selected>Select gender</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other / Prefer not to say</option>
+          </select>
         </div>
-        <div class="form-group">
-          <label class="form-label">Gender</label>
-          <div class="form-select-wrap">
-            <select class="form-select" id="input-gender">
-              <option value="" disabled selected>Select gender</option>
-              <option value="male">Male</option>
-              <option value="female">Female</option>
-              <option value="other">Other / Prefer not to say</option>
-            </select>
-          </div>
-        </div>
-        <button class="continue-btn visible" onclick="submitQuiz()" style="margin-top:8px;">Get my Personalised Plan →</button>
       </div>
+      <button class="continue-btn visible" onclick="submitQuiz()" style="margin-top:8px;">Get my Personalised Plan →</button>
     </div>
+  </div>
+</div>
 
-    <!-- SCREEN 13: Result -->
-    <div class="screen result-screen" id="s13">
-      <div class="result-eyebrow">Your Assessment</div>
-      <div class="result-headline">Your body may be<br>aging faster than you think.</div>
-      <div class="result-body">6 in 10 Indians are biologically older than their actual age. Book a free consult with our physician to find out exactly where you stand — and what to do about it.</div>
-      <div>
-        <a href="https://calendly.com/neav-health" target="_blank" class="result-cta">Book Free Consultation →</a>
-      </div>
-      <div style="margin-top: 16px;">
-        <a href="https://wa.me/919999999999" target="_blank" class="result-cta-secondary">Or message us on WhatsApp</a>
-      </div>
-    </div>
-
+<!-- SCREEN 13: Result -->
+<div class="screen result-screen" id="s13">
+  <div class="screen-inner" style="text-align:center;">
+    <div class="result-eyebrow">Your Assessment</div>
+    <div class="result-headline">Your body may be<br>aging faster than you think.</div>
+    <div class="result-body">6 in 10 Indians are biologically older than their actual age. Book a free consult with our physician to find out exactly where you stand — and what to do about it.</div>
+    <div><a href="https://calendly.com/neav-health" target="_blank" class="result-cta">Book Free Consultation →</a></div>
+    <div style="margin-top: 16px;"><a href="https://wa.me/919999999999" target="_blank" class="result-cta-secondary">Or message us on WhatsApp</a></div>
   </div>
 </div>
 
@@ -671,6 +684,9 @@
     }
   }
 
+  // Screens that use navy background (intros, divider, result)
+  const NAVY_SCREENS = new Set([0, 1, 7, 13]);
+
   // ── NAVIGATION ──
   function goTo(next) {
     if (autoTimer) clearTimeout(autoTimer);
@@ -696,6 +712,13 @@
     history.push(current);
     current = next;
     updateProgress();
+
+    // Toggle navy background for intro/divider/result screens
+    if (NAVY_SCREENS.has(next)) {
+      document.body.classList.add('navy-bg');
+    } else {
+      document.body.classList.remove('navy-bg');
+    }
 
     // Conditional text for Q2 based on Q1
     if (next === 3) applyQ1Conditional();
@@ -804,7 +827,7 @@
   // ── INIT ──
   document.addEventListener('DOMContentLoaded', () => {
     updateProgress();
-    // Auto-start intro sequence
+    document.body.classList.add('navy-bg'); // screen 0 is intro
     autoTimer = setTimeout(() => advance(), AUTO_ADVANCE[0]);
   });
 </script>
