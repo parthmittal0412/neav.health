@@ -209,10 +209,22 @@
     align-items: center;
     gap: 14px;
   }
-  .option-card:hover {
-    background:  rgba(19,16,93,0.8);
-    border-color: var(--navy);
-    color: var(--off-white);
+  .option-card.disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  @media (hover: hover) {
+    .option-card:hover {
+      background: rgba(19,16,93,0.8);
+      border-color: var(--navy);
+      color: var(--off-white);
+    }
+    .option-card:hover .opt-indicator,
+    .option-card:hover .opt-checkbox {
+      border-color: var(--white);
+    }
   }
   .option-card.selected {
     background: rgba(19, 16, 93, 0.15);
@@ -471,7 +483,7 @@
     <div class="options-grid" id="q2-options">
       <button class="option-card" onclick="selectSingle(this,'q2',0)"><span class="opt-indicator"></span><span id="q2-opt0">Improve my symptoms</span></button>
       <button class="option-card" onclick="selectSingle(this,'q2',1)"><span class="opt-indicator"></span><span id="q2-opt1">Prevent future disease</span></button>
-      <button class="option-card" onclick="selectSingle(this,'q2',2)"><span class="opt-indicator"></span><span id="q2-opt2">Reduce meds &amp; improve lifestyle</span></button>
+      <button class="option-card" onclick="selectSingle(this,'q2',2)"><span class="opt-indicator"></span><span id="q2-opt2">Reduce medicines &amp; improve lifestyle</span></button>
       <button class="option-card" onclick="selectSingle(this,'q2',3)"><span class="opt-indicator"></span><span id="q2-opt3">Optimise performance &amp; longevity</span></button>
     </div>
   </div>
@@ -764,7 +776,17 @@
     container.querySelectorAll('.option-card').forEach(c => c.classList.remove('selected'));
     btn.classList.add('selected');
     answers[key] = val;
-    setTimeout(() => advance(), 340);
+    // Show continue button for this screen
+    const screen = btn.closest('.screen');
+    let continueBtn = screen.querySelector('.continue-btn');
+    if (!continueBtn) {
+      continueBtn = document.createElement('button');
+      continueBtn.className = 'continue-btn visible';
+      continueBtn.textContent = 'Continue →';
+      continueBtn.onclick = advance;
+      screen.querySelector('.screen-inner').appendChild(continueBtn);
+    }
+    continueBtn.classList.add('visible');
   }
 
   function toggleMulti(btn, key) {
@@ -779,18 +801,29 @@
     updateContinueBtn(key);
   }
 
-  function selectExclusive(btn, key, isSure) {
-    // Clear all non-exclusive selections
+  function selectExclusive(btn, key) {
     const container = btn.closest('.options-grid');
-    container.querySelectorAll('.option-card:not(.exclusive)').forEach(c => {
-      c.classList.remove('selected');
+    const isNowSelected = !btn.classList.contains('selected');
+
+    // Clear all options first
+    container.querySelectorAll('.option-card').forEach(c => {
+      c.classList.remove('selected', 'disabled');
+      c.disabled = false;
     });
-    // Toggle this exclusive option (clear others)
-    container.querySelectorAll('.option-card.exclusive').forEach(c => {
-      if (c !== btn) c.classList.remove('selected');
-    });
-    btn.classList.toggle('selected');
-    answers[key] = btn.classList.contains('selected') ? [btn.textContent.trim()] : [];
+
+    if (isNowSelected) {
+      // Select this exclusive option
+      btn.classList.add('selected');
+      // Disable all non-exclusive options so they cannot be clicked
+      container.querySelectorAll('.option-card:not(.exclusive)').forEach(c => {
+        c.classList.add('disabled');
+        c.disabled = true;
+      });
+      answers[key] = [btn.textContent.trim()];
+    } else {
+      // Deselected — re-enable everything
+      answers[key] = [];
+    }
     updateContinueBtn(key);
   }
 
@@ -810,16 +843,14 @@
   function submitQuiz() {
     const age = document.getElementById('input-age').value;
     const gender = document.getElementById('input-gender').value;
-    const phone = document.getElementById('input-phone').value;
 
-    if (!age || !gender || !phone) {
-      alert('Please fill in all fields to continue.');
+    if (!age || !gender) {
+      alert('Please fill in your age and gender to continue.');
       return;
     }
 
-    answers['demographics'] = { age, gender, phone };
-    console.log('Quiz answers:', answers);
-    // → Here you would POST to your backend / Formspree / Airtable
+    answers['demographics'] = { age, gender };
+    // POST to backend here when ready
 
     goTo(13);
   }
